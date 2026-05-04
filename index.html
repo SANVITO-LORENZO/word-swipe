@@ -25,29 +25,36 @@
 
         <!-- SCHERMATA 2: GIOCO -->
         <div id="game-screen" class="screen">
-            <!-- HEADER -->
+            
+            <!-- NUOVO HEADER PULITO -->
             <header class="game-header">
                 <div class="top-bar">
+                    <!-- Pillola Timer -->
                     <div class="badge timer-badge">
                         <i class="fa-regular fa-clock"></i>
                         <span id="timer-display">03:00</span>
                     </div>
+                    
+                    <!-- Stelle Centrali -->
                     <div class="stars-container" id="stars-display">
                         <i class="fa-solid fa-star star" id="star-1"></i>
                         <i class="fa-solid fa-star star" id="star-2"></i>
                         <i class="fa-solid fa-star star" id="star-3"></i>
                     </div>
+
+                    <!-- Pillola Contatore Parole -->
                     <div class="badge progress-badge">
                         <i class="fa-solid fa-check-double"></i>
                         <span><span id="words-found">0</span>/<span id="words-total">0</span></span>
                     </div>
                 </div>
+                <!-- Barra di avanzamento sottile -->
                 <div class="progress-track">
                     <div class="progress-fill" id="progress-bar"></div>
                 </div>
             </header>
 
-            <!-- PAROLE FLUIDE -->
+            <!-- CONTENITORE PAROLE FLUIDO -->
             <div class="words-wrapper">
                 <div class="words-grid" id="words-grid"></div>
             </div>
@@ -64,22 +71,19 @@
             </div>
         </div>
 
-        <!-- SCHERMATA 3: FINE -->
+        <!-- SCHERMATA 3: FINE GIOCO -->
         <div id="end-screen" class="screen">
             <div class="end-content">
                 <h2 id="end-title">Tempo Scaduto!</h2>
                 <div class="candy-stars" id="final-stars"></div>
                 <p id="end-subtitle"></p>
-                
-                <div class="final-words-summary" id="final-words-list"></div>
-
                 <div class="divider"></div>
                 <h3>Torna domani!</h3>
                 <p class="small-text">Un nuovo puzzle casuale ti aspetta a mezzanotte.</p>
             </div>
         </div>
 
-    </div> <!-- CHIUSURA CORRETTA DELL'APP CONTAINER -->
+    </div>
 
     <script src="js/script.js"></script>
 </body>

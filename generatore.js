@@ -6,6 +6,7 @@ console.log("🚀 Inizio generazione dei livelli...");
 let dictionary = [];
 try {
     const rawData = fs.readFileSync('dizionario.txt', 'utf-8');
+    // Pulisce le parole, le mette in maiuscolo e tiene solo quelle da 3 a 5 lettere
     dictionary = rawData.split('\n')
         .map(w => w.trim().toUpperCase())
         .filter(w => w.length >= 3 && w.length <= 5);
@@ -17,42 +18,45 @@ try {
 // 2. Seleziona le "Parole Madri" (Esattamente 5 lettere)
 const masterWords = dictionary.filter(w => w.length === 5);
 
-// Funzione helper
+// Funzione helper: Controlla se 'subWord' si può scrivere usando le lettere di 'masterWord'
 function canFormWord(subWord, masterWord) {
     let masterLetters = masterWord.split('');
     for (let char of subWord) {
         const index = masterLetters.indexOf(char);
-        if (index === -1) return false;
-        masterLetters.splice(index, 1); 
+        if (index === -1) return false; // Lettera mancante
+        masterLetters.splice(index, 1); // Rimuove la lettera usata (gestisce correttamente le doppie)
     }
     return true;
 }
 
 const levels = [];
-const seenSignatures = new Set();
+const seenSignatures = new Set(); // Per evitare livelli doppioni (es. ROMA e MORA)
 let idCounter = 1001;
 
 // 3. Motore di Generazione
 for (let master of masterWords) {
+    // Crea una "firma" alfabetica delle lettere per evitare doppioni
     const signature = master.split('').sort().join('');
     if (seenSignatures.has(signature)) continue; 
     
-    let validWords = dictionary.filter(w => canFormWord(w, master));
+    // Trova tutte le parole nel dizionario formabili con queste 5 lettere
+    const validWords = dictionary.filter(w => canFormWord(w, master));
 
-    // IL FIX È QUI: Un livello è giocabile solo se ha tra 4 e 7 parole totali!
-    if (validWords.length >= 4 && validWords.length <= 7) {
+    // Un livello è bello da giocare se ha la parola da 5 lettere e almeno altre 3 parole più corte
+    if (validWords.length >= 4) {
         seenSignatures.add(signature);
         
-        validWords.sort((a, b) => a.length - b.length);
-
         levels.push({
             id: idCounter++,
+            // Mischia l'ordine delle 5 lettere per la UI del cerchio
             letters: master.split('').sort(() => Math.random() - 0.5),
-            words: validWords 
+            // Ordina le parole da trovare dalla più lunga alla più corta
+            words: validWords.sort((a, b) => b.length - a.length) 
         });
     }
 }
 
-// 4. Scrive il file
+// 4. Scrive fisicamente il file puzzles.json
 fs.writeFileSync('puzzles.json', JSON.stringify(levels, null, 4));
-console.log(`✅ Finito! Ho generato ${levels.length} livelli perfettamente bilanciati (4-7 parole massime).`);
+
+console.log(`✅ Finito! Ho generato ${levels.length} livelli unici e perfetti in 'puzzles.json'.`);

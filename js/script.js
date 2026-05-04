@@ -1,13 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
     // ==========================================
-    // 1. VARIABILI GLOBALI
+    // 1. VARIABILI GLOBALI E SETTINGS
     // ==========================================
     let levelLetters = [];
     let targetWords = [];
     let STAR_THRESHOLDS = [];
-    const GAME_TIME_SECONDS = 180; 
-    const todayStr = new Date().toISOString().split('T')[0]; 
+    const GAME_TIME_SECONDS = 180; // 3 minuti esatti
+    const todayStr = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
 
     const screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), end: document.getElementById('end-screen') };
     const elements = {
@@ -26,27 +26,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnShuffle: document.getElementById('btn-shuffle')
     };
 
-    let foundWords = []; 
-
     // ==========================================
-    // 2. ESTRAZIONE DATI
+    // 2. ESTRAZIONE CASUALE DAL DATABASE JSON
     // ==========================================
     try {
         const response = await fetch('puzzles.json');
-        const puzzleDB = await response.json(); 
+        const puzzleDB = await response.json(); // Array di centinaia di oggetti
         
+        // Controllo Anti-Cheat: Legge i dati salvati per la giornata di oggi
         let savedDate = localStorage.getItem('ws_date');
         let savedPuzzleId = localStorage.getItem('ws_puzzle_id');
-        let savedStatus = localStorage.getItem('ws_status'); 
+        let savedStatus = localStorage.getItem('ws_status'); // 'ready' o 'completed'
 
-        // Nuova Giornata: resetta TUTTO per evitare bug di salvataggio
+        // Se è un giorno nuovo, estrai un ID a caso dal database e salvalo!
         if (savedDate !== todayStr) {
             localStorage.setItem('ws_date', todayStr);
             localStorage.setItem('ws_status', 'ready');
-            localStorage.removeItem('ws_found_words'); 
-            localStorage.removeItem('ws_found_count');
-            localStorage.removeItem('ws_stars');
             
+            // Estrazione randomica
             const randomIndex = Math.floor(Math.random() * puzzleDB.length);
             savedPuzzleId = puzzleDB[randomIndex].id;
             localStorage.setItem('ws_puzzle_id', savedPuzzleId);
@@ -54,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             savedStatus = 'ready';
         }
 
+        // Trova il puzzle corrispondente all'ID salvato (o prendi il primo di default se c'è un errore)
         const todayPuzzle = puzzleDB.find(p => p.id == savedPuzzleId) || puzzleDB[0];
         
         levelLetters = todayPuzzle.letters;
@@ -64,15 +62,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         elements.levelIdDisplay.innerText = todayPuzzle.id;
 
+        // Se l'ha già completato oggi, mostragli subito il risultato
         if (savedStatus === 'completed') {
             const savedFoundCount = parseInt(localStorage.getItem('ws_found_count') || 0);
             const savedStars = parseInt(localStorage.getItem('ws_stars') || 0);
-            const savedWords = localStorage.getItem('ws_found_words');
-            if (savedWords) foundWords = JSON.parse(savedWords);
-
             screens.start.classList.remove('active');
             showEndScreen(savedFoundCount === targetWords.length, savedFoundCount, savedStars);
         } else {
+            // Altrimenti abilita il gioco
             elements.startTotal.innerText = targetWords.length;
             elements.wordsTotalTxt.innerText = targetWords.length;
             elements.btnStart.innerText = "Gioca Ora";
@@ -81,13 +78,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
     } catch (error) {
-        console.error("Errore DB:", error);
+        console.error("Errore nel caricamento del DB JSON:", error);
         elements.btnStart.innerText = "Errore DB";
     }
 
     // ==========================================
-    // 3. STATO E TIMER
+    // 3. STATO E TIMER DEL GIOCO
     // ==========================================
+    let foundWords = [];
     let timeLeft = GAME_TIME_SECONDS;
     let timerInterval = null;
     let isDragging = false;
@@ -101,10 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         buildWordSlots();
         renderBoard();
-        
-        // Ritardo calcolato per permettere all'animazione CSS di finire prima di misurare il Canvas
-        setTimeout(resizeCanvas, 100); 
-
         timerInterval = setInterval(updateTimer, 1000);
     }
 
@@ -115,7 +109,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.timerDisplay.innerText = `${m}:${s}`;
 
         if (timeLeft <= 10) elements.timerDisplay.classList.add('warning');
-        if (timeLeft <= 0) handleGameOver(false);
+
+        if (timeLeft <= 0) {
+            handleGameOver(false);
+        }
     }
 
     function handleGameOver(isWin) {
@@ -126,17 +123,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (foundWords.length >= STAR_THRESHOLDS[i]) starsWon++;
         }
 
+        // Blocca il giocatore per oggi salvando lo status "completed"
         localStorage.setItem('ws_status', 'completed');
         localStorage.setItem('ws_found_count', foundWords.length);
         localStorage.setItem('ws_stars', starsWon);
-        localStorage.setItem('ws_found_words', JSON.stringify(foundWords));
 
         screens.game.classList.remove('active');
         showEndScreen(isWin, foundWords.length, starsWon);
     }
 
     // ==========================================
-    // 4. FINE GIOCO
+    // 4. ANIMAZIONE END SCREEN E SLOT
     // ==========================================
     function showEndScreen(isWin, wordsCount, starsCount) {
         screens.end.classList.add('active');
@@ -145,36 +142,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const finalStarsContainer = document.getElementById('final-stars');
         finalStarsContainer.innerHTML = ''; 
+
         for (let i = 0; i < 3; i++) {
             const starIcon = document.createElement('i');
             starIcon.className = `fa-solid fa-star candy-star`;
             finalStarsContainer.appendChild(starIcon);
+            
             setTimeout(() => {
                 if (i < starsCount) starIcon.classList.add('animate-win');
                 else starIcon.classList.add('animate-lose');
             }, 300 + (i * 400)); 
         }
-
-        const finalWordsList = document.getElementById('final-words-list');
-        finalWordsList.innerHTML = ''; 
-        const sortedTargetWords = [...targetWords].sort((a, b) => b.length - a.length);
-
-        sortedTargetWords.forEach(word => {
-            const isFound = foundWords.includes(word);
-            const wordSpan = document.createElement('span');
-            wordSpan.className = `summary-word ${isFound ? 'found' : 'missed'}`;
-            wordSpan.innerHTML = `${word} <i class="fa-solid ${isFound ? 'fa-check' : 'fa-xmark'}"></i>`;
-            finalWordsList.appendChild(wordSpan);
-        });
     }
 
     function buildWordSlots() {
         elements.wordsGrid.innerHTML = '';
         const sortedWords = [...targetWords].sort((a, b) => a.length - b.length);
+        
         sortedWords.forEach(word => {
             const slot = document.createElement('div');
             slot.classList.add('word-slot');
             slot.id = `slot-${word}`;
+
             for (let i = 0; i < word.length; i++) {
                 const box = document.createElement('div');
                 box.classList.add('letter-box');
@@ -186,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // 5. BOARD E SWIPE
+    // 5. BOARD E PULSANTE SHUFFLE
     // ==========================================
     let canvas, ctx;
     
@@ -202,9 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.letter-node').forEach(e => e.remove());
         
         if (!document.getElementById('swipe-canvas')) {
-            const cvs = document.createElement('canvas');
-            cvs.id = 'swipe-canvas';
-            elements.board.appendChild(cvs);
+            elements.board.innerHTML += '<canvas id="swipe-canvas"></canvas>';
         }
         canvas = document.getElementById('swipe-canvas');
         ctx = canvas.getContext('2d');
@@ -241,7 +228,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (navigator.vibrate) navigator.vibrate(20); 
     });
 
-    // Tracciamento Coordinate
+    // ==========================================
+    // 6. GESTIONE SWIPE
+    // ==========================================
     function getCenterCoords(node) {
         const nodeRect = node.getBoundingClientRect();
         const boardRect = elements.board.getBoundingClientRect();
@@ -272,21 +261,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.stroke();
     }
 
-    // FIX: Ora ascoltiamo i movimenti su tutta la "Window" così non perdi il tratto
+    elements.boardArea.addEventListener('touchstart', (e) => {
+        if(e.target !== elements.btnShuffle && e.target.parentNode !== elements.btnShuffle) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
     elements.boardArea.addEventListener('pointerdown', (e) => {
-        if(e.target.closest('.shuffle-btn')) return;
+        if(e.target === elements.btnShuffle || e.target.parentNode === elements.btnShuffle) return;
         isDragging = true;
         pointerX = e.clientX; pointerY = e.clientY;
         checkIntersection(pointerX, pointerY);
     });
 
-    window.addEventListener('pointermove', (e) => {
+    elements.boardArea.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
-        e.preventDefault(); 
         pointerX = e.clientX; pointerY = e.clientY;
         checkIntersection(pointerX, pointerY);
         drawLines();
-    }, { passive: false });
+    });
 
     window.addEventListener('pointerup', () => {
         if (isDragging) {
@@ -309,6 +302,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ==========================================
+    // 7. VALIDAZIONE LOGICA E PUNTEGGIO
+    // ==========================================
     function validateWord() {
         if (currentWord.length < 3) return;
 
@@ -320,6 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         foundWords.push(currentWord);
+        
         const slot = document.getElementById(`slot-${currentWord}`);
         if(slot) slot.classList.add('found');
 
@@ -328,10 +325,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.progressBar.style.width = `${progressPercentage}%`;
 
         for (let i = 0; i < 3; i++) {
-            if (foundWords.length >= STAR_THRESHOLDS[i]) elements.stars[i].classList.add('filled');
+            if (foundWords.length >= STAR_THRESHOLDS[i]) {
+                elements.stars[i].classList.add('filled');
+            }
         }
 
-        if (foundWords.length === targetWords.length) setTimeout(() => handleGameOver(true), 800); 
+        if (foundWords.length === targetWords.length) {
+            setTimeout(() => handleGameOver(true), 800); 
+        }
     }
 
     function resetSelection() {

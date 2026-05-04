@@ -8,15 +8,16 @@
     --star-filled: #fbbf24;
     --node-bg: #1f2937;
     --border-color: #374151;
-    --header-bg: rgba(17, 24, 39, 0.85);
+    --header-bg: rgba(17, 24, 39, 0.85); /* Sfondo semitrasparente */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; align-items: center; height: 100vh; height: 100dvh; overflow: hidden; }
 
+/* === APP CONTAINER (Adattivo per Telefono e Tablet) === */
 .app-container { 
     width: 100%; 
-    max-width: 550px; 
+    max-width: 550px; /* Allargato per renderlo godibile anche su Tablet */
     height: 100%; 
     max-height: 1000px; 
     background: var(--app-bg); 
@@ -24,7 +25,6 @@ body { background: var(--bg-main); color: var(--text-main); display: flex; justi
     box-shadow: 0 0 40px rgba(0,0,0,0.6); 
     display: flex; 
     flex-direction: column; 
-    touch-action: none;
 }
 
 .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 1; }
@@ -41,21 +41,40 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .btn-primary:active { transform: scale(0.95); }
 .btn-primary:disabled { background: var(--border-color); box-shadow: none; cursor: not-allowed; opacity: 0.7; }
 
-/* === HEADER DI GIOCO === */
+/* === HEADER DI GIOCO (Minimalista) === */
 .game-header { 
     background: var(--header-bg); 
     backdrop-filter: blur(12px); 
     -webkit-backdrop-filter: blur(12px);
-    padding: env(safe-area-inset-top, 20px) 20px 15px; 
+    padding: env(safe-area-inset-top, 20px) 20px 15px; /* Gestisce la notch degli iPhone */
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     z-index: 20;
 }
 
-.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.top-bar { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 15px; 
+}
 
-.badge { background: rgba(255, 255, 255, 0.08); padding: 8px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; color: var(--text-main); border: 1px solid rgba(255, 255, 255, 0.05); }
+/* Le "pillole" laterali per Timer e Parole */
+.badge {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 8px 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .timer-badge i { color: var(--accent); }
 .progress-badge i { color: var(--star-filled); }
+
 #timer-display { font-variant-numeric: tabular-nums; }
 .timer-badge:has(.warning) { border-color: #ef4444; color: #ef4444; animation: pulse 1s infinite; }
 @keyframes pulse { 50% { opacity: 0.5; } }
@@ -66,40 +85,57 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
 .progress-fill { width: 0%; height: 100%; background: var(--accent); transition: width 0.4s ease; box-shadow: 0 0 10px var(--accent); }
 
-/* === GRIGLIA PAROLE (FIXATA) === */
+/* === GRIGLIA PAROLE (Fluida per Tablet e Telefono) === */
 .words-wrapper { 
-    flex: 1 1 0;
-    max-height: 38vh; 
-    padding: 25px 20px 40px; 
+    flex: 0 1 auto; 
+    padding: 25px 20px 10px; 
     overflow-y: auto; 
-    scrollbar-width: none;
     display: flex;
     justify-content: center;
-    align-content: flex-start;
 }
-.words-wrapper::-webkit-scrollbar { display: none; }
 
-.words-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px 20px; width: 100%; }
+.words-grid { 
+    display: flex; 
+    flex-wrap: wrap; /* Fa andare a capo gli elementi dolcemente */
+    justify-content: center; 
+    gap: 15px 20px; 
+    width: 100%;
+}
+
 .word-slot { display: flex; gap: 4px; justify-content: center;}
 
-.letter-box { width: clamp(28px, 8vw, 36px); height: clamp(34px, 9vw, 42px); background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: clamp(1.1rem, 4vw, 1.3rem); color: transparent; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.word-slot.found .letter-box { background: var(--accent); border-color: var(--accent); color: white; transform: translateY(-4px); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+/* Le tesserine delle lettere, più morbide e moderne */
+.letter-box { 
+    width: clamp(28px, 8vw, 36px); 
+    height: clamp(34px, 9vw, 42px); 
+    background: rgba(255, 255, 255, 0.03); 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border-radius: 8px; 
+    display: flex; justify-content: center; align-items: center; 
+    font-weight: 800; font-size: clamp(1.1rem, 4vw, 1.3rem); 
+    color: transparent; 
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+.word-slot.found .letter-box { 
+    background: var(--accent); 
+    border-color: var(--accent); 
+    color: white; 
+    transform: translateY(-4px);
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
 
+/* === BOARD SWIPE === */
 .current-word { height: 45px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
 #word-display { font-size: clamp(2rem, 8vw, 2.5rem); font-weight: 900; color: white; letter-spacing: 5px; }
 
-/* === BOARD SWIPE === */
-.board-area { 
-    flex: 0 0 auto; 
-    min-height: 350px; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    position: relative;
-    padding-bottom: 20px;
-}
+.board-area { flex: 1; display: flex; justify-content: center; align-items: center; touch-action: none; position: relative;}
 
-.circle-board { position: relative; width: 85vmin; max-width: 380px; height: 85vmin; max-height: 380px; border-radius: 50%; }
+.circle-board { 
+    position: relative; 
+    width: 85vmin; max-width: 380px; /* Ingrandito per i tablet */
+    height: 85vmin; max-height: 380px; 
+    border-radius: 50%; 
+}
 #swipe-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
 .shuffle-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: clamp(55px, 15vw, 70px); height: clamp(55px, 15vw, 70px); background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color); color: var(--text-muted); border-radius: 50%; font-size: clamp(1.2rem, 4vw, 1.6rem); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; transition: all 0.2s ease; }
@@ -108,7 +144,7 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .letter-node { position: absolute; width: clamp(60px, 16vmin, 80px); height: clamp(60px, 16vmin, 80px); background: var(--node-bg); border: 2px solid var(--border-color); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: clamp(1.8rem, 6vmin, 2.2rem); font-weight: 800; transform: translate(-50%, -50%); transition: all 0.1s ease; z-index: 2; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
 .letter-node.selected { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 25px rgba(59, 130, 246, 0.6); transform: translate(-50%, -50%) scale(1.1); }
 
-/* === END SCREEN === */
+/* === CANDY CRUSH STARS END SCREEN === */
 #end-title { font-size: clamp(2rem, 8vw, 3rem); margin-bottom: 20px; }
 #end-subtitle { font-size: 1.2rem; margin-bottom: 30px; font-weight: 600;}
 .divider { width: 50px; height: 2px; background: var(--border-color); margin: 0 auto 30px; }
@@ -123,10 +159,3 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .candy-star.animate-lose { animation: fadePop 0.4s ease forwards; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); color: #ef4444;} 75% { transform: translateX(5px); color: #ef4444;} }
 .shake { animation: shake 0.3s; }
-
-.final-words-summary { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; width: 100%; }
-.summary-word { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
-.summary-word.found { border-color: #10b981; color: white; }
-.summary-word.found i { color: #10b981; }
-.summary-word.missed { border-color: #ef4444; color: var(--text-muted); opacity: 0.8; }
-.summary-word.missed i { color: #ef4444; }
