@@ -140,6 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('end-title').innerText = isWin ? "Completato!" : "Tempo Scaduto!";
         document.getElementById('end-subtitle').innerText = `Hai trovato ${wordsCount} parole su ${targetWords.length}.`;
 
+        // 1. Animazione Stelle
         const finalStarsContainer = document.getElementById('final-stars');
         finalStarsContainer.innerHTML = ''; 
 
@@ -153,24 +154,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else starIcon.classList.add('animate-lose');
             }, 300 + (i * 400)); 
         }
-    }
 
-    function buildWordSlots() {
-        elements.wordsGrid.innerHTML = '';
-        const sortedWords = [...targetWords].sort((a, b) => a.length - b.length);
-        
-        sortedWords.forEach(word => {
-            const slot = document.createElement('div');
-            slot.classList.add('word-slot');
-            slot.id = `slot-${word}`;
+        // 2. Generazione Riepilogo Parole (Spunta / X)
+        const finalWordsList = document.getElementById('final-words-list');
+        finalWordsList.innerHTML = ''; // Svuota la lista precedente
 
-            for (let i = 0; i < word.length; i++) {
-                const box = document.createElement('div');
-                box.classList.add('letter-box');
-                box.innerText = word[i];
-                slot.appendChild(box);
-            }
-            elements.wordsGrid.appendChild(slot);
+        // Ordina le parole dalla più lunga alla più corta
+        const sortedTargetWords = [...targetWords].sort((a, b) => b.length - a.length);
+
+        sortedTargetWords.forEach(word => {
+            const isFound = foundWords.includes(word);
+            const wordSpan = document.createElement('span');
+            
+            // Applica la classe 'found' o 'missed'
+            wordSpan.className = `summary-word ${isFound ? 'found' : 'missed'}`;
+            
+            // Inserisce il testo della parola e l'icona FontAwesome corrispondente
+            wordSpan.innerHTML = `${word} <i class="fa-solid ${isFound ? 'fa-check' : 'fa-xmark'}"></i>`;
+            
+            finalWordsList.appendChild(wordSpan);
         });
     }
 

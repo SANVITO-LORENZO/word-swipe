@@ -159,3 +159,43 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .candy-star.animate-lose { animation: fadePop 0.4s ease forwards; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); color: #ef4444;} 75% { transform: translateX(5px); color: #ef4444;} }
 .shake { animation: shake 0.3s; }
+
+/* === RIEPILOGO PAROLE FINALI === */
+.final-words-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    width: 100%;
+}
+
+.summary-word {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 1px;
+}
+
+.summary-word.found {
+    border-color: #10b981; /* Verde smeraldo */
+    color: white;
+}
+.summary-word.found i {
+    color: #10b981;
+}
+
+.summary-word.missed {
+    border-color: #ef4444; /* Rosso */
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+.summary-word.missed i {
+    color: #ef4444;
+}
