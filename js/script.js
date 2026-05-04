@@ -26,24 +26,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnShuffle: document.getElementById('btn-shuffle')
     };
 
+    let foundWords = []; // Spostato qui in alto per renderlo accessibile ovunque
+
     // ==========================================
     // 2. ESTRAZIONE CASUALE DAL DATABASE JSON
     // ==========================================
     try {
         const response = await fetch('puzzles.json');
-        const puzzleDB = await response.json(); // Array di centinaia di oggetti
+        const puzzleDB = await response.json(); 
         
-        // Controllo Anti-Cheat: Legge i dati salvati per la giornata di oggi
         let savedDate = localStorage.getItem('ws_date');
         let savedPuzzleId = localStorage.getItem('ws_puzzle_id');
-        let savedStatus = localStorage.getItem('ws_status'); // 'ready' o 'completed'
+        let savedStatus = localStorage.getItem('ws_status'); 
 
         // Se è un giorno nuovo, estrai un ID a caso dal database e salvalo!
         if (savedDate !== todayStr) {
             localStorage.setItem('ws_date', todayStr);
             localStorage.setItem('ws_status', 'ready');
             
-            // Estrazione randomica
             const randomIndex = Math.floor(Math.random() * puzzleDB.length);
             savedPuzzleId = puzzleDB[randomIndex].id;
             localStorage.setItem('ws_puzzle_id', savedPuzzleId);
@@ -51,7 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             savedStatus = 'ready';
         }
 
-        // Trova il puzzle corrispondente all'ID salvato (o prendi il primo di default se c'è un errore)
         const todayPuzzle = puzzleDB.find(p => p.id == savedPuzzleId) || puzzleDB[0];
         
         levelLetters = todayPuzzle.letters;
@@ -66,10 +65,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (savedStatus === 'completed') {
             const savedFoundCount = parseInt(localStorage.getItem('ws_found_count') || 0);
             const savedStars = parseInt(localStorage.getItem('ws_stars') || 0);
+            
+            // ✨ FIX: Ricarica l'array delle parole esatte trovate dalla memoria
+            const savedWords = localStorage.getItem('ws_found_words');
+            if (savedWords) {
+                foundWords = JSON.parse(savedWords);
+            }
+
             screens.start.classList.remove('active');
             showEndScreen(savedFoundCount === targetWords.length, savedFoundCount, savedStars);
         } else {
-            // Altrimenti abilita il gioco
             elements.startTotal.innerText = targetWords.length;
             elements.wordsTotalTxt.innerText = targetWords.length;
             elements.btnStart.innerText = "Gioca Ora";
@@ -85,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     // 3. STATO E TIMER DEL GIOCO
     // ==========================================
-    let foundWords = [];
     let timeLeft = GAME_TIME_SECONDS;
     let timerInterval = null;
     let isDragging = false;
@@ -127,6 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('ws_status', 'completed');
         localStorage.setItem('ws_found_count', foundWords.length);
         localStorage.setItem('ws_stars', starsWon);
+        
+        // ✨ FIX: Salva fisicamente quali parole ha trovato
+        localStorage.setItem('ws_found_words', JSON.stringify(foundWords));
 
         screens.game.classList.remove('active');
         showEndScreen(isWin, foundWords.length, starsWon);
@@ -140,7 +147,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('end-title').innerText = isWin ? "Completato!" : "Tempo Scaduto!";
         document.getElementById('end-subtitle').innerText = `Hai trovato ${wordsCount} parole su ${targetWords.length}.`;
 
-        // 1. Animazione Stelle
         const finalStarsContainer = document.getElementById('final-stars');
         finalStarsContainer.innerHTML = ''; 
 
@@ -155,24 +161,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 300 + (i * 400)); 
         }
 
-        // 2. Generazione Riepilogo Parole (Spunta / X)
         const finalWordsList = document.getElementById('final-words-list');
-        finalWordsList.innerHTML = ''; // Svuota la lista precedente
+        finalWordsList.innerHTML = ''; 
 
-        // Ordina le parole dalla più lunga alla più corta
         const sortedTargetWords = [...targetWords].sort((a, b) => b.length - a.length);
 
         sortedTargetWords.forEach(word => {
             const isFound = foundWords.includes(word);
             const wordSpan = document.createElement('span');
             
-            // Applica la classe 'found' o 'missed'
             wordSpan.className = `summary-word ${isFound ? 'found' : 'missed'}`;
-            
-            // Inserisce il testo della parola e l'icona FontAwesome corrispondente
             wordSpan.innerHTML = `${word} <i class="fa-solid ${isFound ? 'fa-check' : 'fa-xmark'}"></i>`;
             
             finalWordsList.appendChild(wordSpan);
+        });
+    }
+
+    function buildWordSlots() {
+        elements.wordsGrid.innerHTML = '';
+        const sortedWords = [...targetWords].sort((a, b) => a.length - b.length);
+        
+        sortedWords.forEach(word => {
+            const slot = document.createElement('div');
+            slot.classList.add('word-slot');
+            slot.id = `slot-${word}`;
+
+            for (let i = 0; i < word.length; i++) {
+                const box = document.createElement('div');
+                box.classList.add('letter-box');
+                box.innerText = word[i];
+                slot.appendChild(box);
+            }
+            elements.wordsGrid.appendChild(slot);
         });
     }
 
