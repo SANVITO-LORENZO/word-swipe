@@ -24,12 +24,13 @@ body { background: var(--bg-main); color: var(--text-main); display: flex; justi
     box-shadow: 0 0 40px rgba(0,0,0,0.6); 
     display: flex; 
     flex-direction: column; 
-    touch-action: none; /* Impedisce qualsiasi scroll strano durante il gioco */
+    touch-action: none;
 }
 
 .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 1; }
 .screen.active { opacity: 1; pointer-events: auto; z-index: 10; }
 
+/* === SCHERMATA START & FINE === */
 .start-content, .end-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; }
 .logo-icon { font-size: 4rem; color: var(--accent); margin-bottom: 20px; }
 h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
@@ -40,6 +41,7 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .btn-primary:active { transform: scale(0.95); }
 .btn-primary:disabled { background: var(--border-color); box-shadow: none; cursor: not-allowed; opacity: 0.7; }
 
+/* === HEADER DI GIOCO === */
 .game-header { 
     background: var(--header-bg); 
     backdrop-filter: blur(12px); 
@@ -64,16 +66,18 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
 .progress-fill { width: 0%; height: 100%; background: var(--accent); transition: width 0.4s ease; box-shadow: 0 0 10px var(--accent); }
 
-/* WRAPPER MODIFICATO PER EVITARE LA SCROLLBAR CHE ROMPE IL GIOCO SU WINDOWS */
+/* === GRIGLIA PAROLE (FIXATA) === */
 .words-wrapper { 
-    flex: 0 1 auto; 
+    flex: 1 1 0;
+    max-height: 38vh; /* Non supera mai il 38% dello schermo */
     padding: 25px 20px 10px; 
-    overflow-y: scroll; /* Forza lo scroll fluido */
-    scrollbar-width: none; /* Nasconde la scrollbar su Firefox */
+    overflow-y: auto; /* Scorre se ci sono troppe parole */
+    scrollbar-width: none;
     display: flex;
     justify-content: center;
+    align-content: flex-start;
 }
-.words-wrapper::-webkit-scrollbar { display: none; /* Nasconde la scrollbar su Chrome/Edge */ }
+.words-wrapper::-webkit-scrollbar { display: none; }
 
 .words-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px 20px; width: 100%; }
 .word-slot { display: flex; gap: 4px; justify-content: center;}
@@ -84,7 +88,16 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .current-word { height: 45px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
 #word-display { font-size: clamp(2rem, 8vw, 2.5rem); font-weight: 900; color: white; letter-spacing: 5px; }
 
-.board-area { flex: 1; display: flex; justify-content: center; align-items: center; position: relative;}
+/* === BOARD SWIPE (FIXATA) === */
+.board-area { 
+    flex: 0 0 auto; /* La protegge dallo schiacciamento */
+    min-height: 350px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    position: relative;
+    padding-bottom: 20px;
+}
 
 .circle-board { position: relative; width: 85vmin; max-width: 380px; height: 85vmin; max-height: 380px; border-radius: 50%; }
 #swipe-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
@@ -95,6 +108,7 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .letter-node { position: absolute; width: clamp(60px, 16vmin, 80px); height: clamp(60px, 16vmin, 80px); background: var(--node-bg); border: 2px solid var(--border-color); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: clamp(1.8rem, 6vmin, 2.2rem); font-weight: 800; transform: translate(-50%, -50%); transition: all 0.1s ease; z-index: 2; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
 .letter-node.selected { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 25px rgba(59, 130, 246, 0.6); transform: translate(-50%, -50%) scale(1.1); }
 
+/* === END SCREEN === */
 #end-title { font-size: clamp(2rem, 8vw, 3rem); margin-bottom: 20px; }
 #end-subtitle { font-size: 1.2rem; margin-bottom: 30px; font-weight: 600;}
 .divider { width: 50px; height: 2px; background: var(--border-color); margin: 0 auto 30px; }

@@ -39,10 +39,10 @@ for (let master of masterWords) {
     
     let validWords = dictionary.filter(w => canFormWord(w, master));
 
-    if (validWords.length >= 4) {
+    // IL FIX È QUI: Un livello è giocabile solo se ha tra 4 e 7 parole totali!
+    if (validWords.length >= 4 && validWords.length <= 7) {
         seenSignatures.add(signature);
         
-        // Ordina le parole in modo che le più corte vengano mostrate prima (UX migliore)
         validWords.sort((a, b) => a.length - b.length);
 
         levels.push({
@@ -55,5 +55,4 @@ for (let master of masterWords) {
 
 // 4. Scrive il file
 fs.writeFileSync('puzzles.json', JSON.stringify(levels, null, 4));
-
-console.log(`✅ Finito! Ho generato ${levels.length} livelli e il file JSON è ora strutturato perfettamente per lo script.js.`);
+console.log(`✅ Finito! Ho generato ${levels.length} livelli perfettamente bilanciati (4-7 parole massime).`);
