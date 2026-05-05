@@ -153,6 +153,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else starIcon.classList.add('animate-lose');
             }, 300 + (i * 400)); 
         }
+
+        // === INIZIO NUOVA LOGICA: LISTA PAROLE FINALI ===
+        const wordsResultContainer = document.getElementById('final-words-list');
+        if (wordsResultContainer) {
+            wordsResultContainer.innerHTML = ''; // Svuotiamo eventuali duplicati
+            
+            // Ordiniamo le parole dalla più lunga alla più corta (opzionale, per stile)
+            const sortedFinalWords = [...targetWords].sort((a, b) => b.length - a.length);
+
+            sortedFinalWords.forEach(word => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'final-word-item';
+
+                if (foundWords.includes(word)) {
+                    // Parola trovata: Spunta verde
+                    wordEl.innerHTML = `<span>${word}</span> <i class="fa-solid fa-check" style="color: #10b981;"></i>`;
+                    wordEl.classList.add('word-found');
+                } else {
+                    // Parola mancata: X rossa
+                    wordEl.innerHTML = `<span>${word}</span> <i class="fa-solid fa-xmark" style="color: #ef4444;"></i>`;
+                    wordEl.classList.add('word-missed');
+                }
+
+                wordsResultContainer.appendChild(wordEl);
+            });
+        }
+        // === FINE NUOVA LOGICA ===
     }
 
     function buildWordSlots() {

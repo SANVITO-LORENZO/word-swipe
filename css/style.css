@@ -17,7 +17,7 @@ body { background: var(--bg-main); color: var(--text-main); display: flex; justi
 /* === APP CONTAINER (Adattivo per Telefono e Tablet) === */
 .app-container { 
     width: 100%; 
-    max-width: 550px; /* Allargato per renderlo godibile anche su Tablet */
+    max-width: 550px; 
     height: 100%; 
     max-height: 1000px; 
     background: var(--app-bg); 
@@ -46,7 +46,7 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
     background: var(--header-bg); 
     backdrop-filter: blur(12px); 
     -webkit-backdrop-filter: blur(12px);
-    padding: env(safe-area-inset-top, 20px) 20px 15px; /* Gestisce la notch degli iPhone */
+    padding: env(safe-area-inset-top, 20px) 20px 15px; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     z-index: 20;
 }
@@ -85,34 +85,44 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
 .progress-fill { width: 0%; height: 100%; background: var(--accent); transition: width 0.4s ease; box-shadow: 0 0 10px var(--accent); }
 
-/* === GRIGLIA PAROLE (Fluida per Tablet e Telefono) === */
+/* === GRIGLIA PAROLE (Migliorata per non accavallarsi) === */
 .words-wrapper { 
-    flex: 0 1 auto; 
-    padding: 25px 20px 10px; 
+    flex: 1; /* Prende tutto lo spazio sopra alla ruota! */
+    padding: 15px 15px; 
     overflow-y: auto; 
     display: flex;
     justify-content: center;
+    
+    scrollbar-width: none; 
+    -ms-overflow-style: none;  
+}
+
+.words-wrapper::-webkit-scrollbar {
+    display: none; 
 }
 
 .words-grid { 
     display: flex; 
-    flex-wrap: wrap; /* Fa andare a capo gli elementi dolcemente */
+    flex-wrap: wrap; 
     justify-content: center; 
-    gap: 15px 20px; 
+    align-content: flex-start; 
+    gap: 10px 12px; /* Margini ridotti per un look più compatto */
     width: 100%;
+    margin: auto 0; 
+    padding-bottom: 10px; 
 }
 
 .word-slot { display: flex; gap: 4px; justify-content: center;}
 
-/* Le tesserine delle lettere, più morbide e moderne */
+/* Le tesserine delle lettere, rimpicciolite leggermente */
 .letter-box { 
-    width: clamp(28px, 8vw, 36px); 
-    height: clamp(34px, 9vw, 42px); 
+    width: clamp(24px, 7vw, 32px); 
+    height: clamp(30px, 8vw, 38px); 
     background: rgba(255, 255, 255, 0.03); 
     border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-radius: 8px; 
+    border-radius: 6px; 
     display: flex; justify-content: center; align-items: center; 
-    font-weight: 800; font-size: clamp(1.1rem, 4vw, 1.3rem); 
+    font-weight: 800; font-size: clamp(1rem, 4vw, 1.1rem); 
     color: transparent; 
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
 }
@@ -120,28 +130,39 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
     background: var(--accent); 
     border-color: var(--accent); 
     color: white; 
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
 }
 
 /* === BOARD SWIPE === */
-.current-word { height: 45px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
-#word-display { font-size: clamp(2rem, 8vw, 2.5rem); font-weight: 900; color: white; letter-spacing: 5px; }
+.current-word { height: 40px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
+#word-display { font-size: clamp(1.8rem, 7vw, 2.2rem); font-weight: 900; color: white; letter-spacing: 5px; }
 
-.board-area { flex: 1; display: flex; justify-content: center; align-items: center; touch-action: none; position: relative;}
+/* L'area della ruota ora prende SOLO lo spazio necessario (flex: 0 1 auto) */
+.board-area { 
+    flex: 0 1 auto; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    touch-action: none; 
+    position: relative;
+    padding: 10px 0 20px 0; /* Padding per staccarla dal fondo */
+}
 
+/* Ruota rimpicciolita per fare spazio in alto */
 .circle-board { 
     position: relative; 
-    width: 85vmin; max-width: 380px; /* Ingrandito per i tablet */
-    height: 85vmin; max-height: 380px; 
+    width: 75vmin; max-width: 320px; /* Prima era 85vmin / 380px */
+    height: 75vmin; max-height: 320px; 
     border-radius: 50%; 
 }
 #swipe-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
-.shuffle-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: clamp(55px, 15vw, 70px); height: clamp(55px, 15vw, 70px); background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color); color: var(--text-muted); border-radius: 50%; font-size: clamp(1.2rem, 4vw, 1.6rem); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; transition: all 0.2s ease; }
+.shuffle-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: clamp(45px, 12vw, 60px); height: clamp(45px, 12vw, 60px); background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color); color: var(--text-muted); border-radius: 50%; font-size: clamp(1.1rem, 3.5vw, 1.4rem); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; transition: all 0.2s ease; }
 .shuffle-btn:active { transform: translate(-50%, -50%) scale(0.85); background: var(--accent); color: white; border-color: var(--accent); }
 
-.letter-node { position: absolute; width: clamp(60px, 16vmin, 80px); height: clamp(60px, 16vmin, 80px); background: var(--node-bg); border: 2px solid var(--border-color); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: clamp(1.8rem, 6vmin, 2.2rem); font-weight: 800; transform: translate(-50%, -50%); transition: all 0.1s ease; z-index: 2; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
+/* Nodi delle lettere rimpiccioliti per stare nel nuovo cerchio */
+.letter-node { position: absolute; width: clamp(50px, 14vmin, 70px); height: clamp(50px, 14vmin, 70px); background: var(--node-bg); border: 2px solid var(--border-color); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: clamp(1.5rem, 5vmin, 2rem); font-weight: 800; transform: translate(-50%, -50%); transition: all 0.1s ease; z-index: 2; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
 .letter-node.selected { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 25px rgba(59, 130, 246, 0.6); transform: translate(-50%, -50%) scale(1.1); }
 
 /* === CANDY CRUSH STARS END SCREEN === */
@@ -159,3 +180,46 @@ h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; line-height: 1.1; marg
 .candy-star.animate-lose { animation: fadePop 0.4s ease forwards; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); color: #ef4444;} 75% { transform: translateX(5px); color: #ef4444;} }
 .shake { animation: shake 0.3s; }
+
+/* === NUOVE AGGIUNTE: LISTA PAROLE FINALI (END SCREEN) === */
+.final-words-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0 30px 0;
+    width: 100%;
+    max-width: 450px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.final-word-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.final-word-item.word-found {
+    border-color: #10b981; /* Verde smeraldo */
+    color: var(--text-main);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+
+.final-word-item.word-missed {
+    border-color: rgba(239, 68, 68, 0.4); /* Rosso tenue per i bordi */
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+.final-word-item.word-missed span {
+    text-decoration: line-through; /* Barra la parola non trovata */
+}
