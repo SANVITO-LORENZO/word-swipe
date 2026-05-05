@@ -7,7 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let targetWords = [];
     let STAR_THRESHOLDS = [];
     const GAME_TIME_SECONDS = 180; // 3 minuti esatti
-    const todayStr = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+    
+    // RISOLTO BUG FUSO ORARIO: Usa la data locale del dispositivo
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; 
 
     const screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), end: document.getElementById('end-screen') };
     const elements = {
@@ -154,12 +157,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 300 + (i * 400)); 
         }
 
-        // === INIZIO NUOVA LOGICA: LISTA PAROLE FINALI ===
+        // === LISTA PAROLE FINALI ===
         const wordsResultContainer = document.getElementById('final-words-list');
         if (wordsResultContainer) {
             wordsResultContainer.innerHTML = ''; // Svuotiamo eventuali duplicati
             
-            // Ordiniamo le parole dalla più lunga alla più corta (opzionale, per stile)
+            // Ordiniamo le parole dalla più lunga alla più corta
             const sortedFinalWords = [...targetWords].sort((a, b) => b.length - a.length);
 
             sortedFinalWords.forEach(word => {
@@ -179,7 +182,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 wordsResultContainer.appendChild(wordEl);
             });
         }
-        // === FINE NUOVA LOGICA ===
     }
 
     function buildWordSlots() {
