@@ -36,6 +36,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let targetWords = [];
     let bonusWordsPool = [];
     let starThresholds = [];
+    const STAR_THRESHOLDS = [];
+
+    const GAME_TIME_SECONDS = 180; // 3 minuti esatti
+
+    // RISOLTO BUG FUSO ORARIO: Usa la data locale del dispositivo
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     let foundWords = [];
     let foundBonusWords = [];
@@ -43,19 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let timeLeft = GAME_TIME_SECONDS;
     let timerInterval = null;
     let isPracticeMode = false;
-
-    let isDragging = false;
-    let currentWord = '';
-    let selectedNodes = [];
-    let pointerX = 0;
-    let pointerY = 0;
-    let toastTimeout = null;
-
-    const screens = {
-        start: document.getElementById('start-screen'),
-        game: document.getElementById('game-screen'),
-        end: document.getElementById('end-screen')
-    };
 
     const elements = {
         btnStart: document.getElementById('btn-start'),
@@ -216,6 +210,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* ---------------------------------------------------------------------- */
     /*  05. SLOTS, HINTS & END SCREEN                                         */
     /* ---------------------------------------------------------------------- */
+
+    // ==========================================
+    // 4. ANIMAZIONE END SCREEN E SLOT
+    // ==========================================
+    function showEndScreen(isWin, wordsCount, starsCount) {
+        screens.end.classList.add('active');
+        document.getElementById('end-title').innerText = isWin ? "Completato!" : "Tempo Scaduto!";
+        document.getElementById('end-subtitle').innerText = `Hai trovato ${wordsCount} parole su ${targetWords.length}.`;
+
+        const finalStarsContainer = document.getElementById('final-stars');
+        finalStarsContainer.innerHTML = '';
+
+        for (let i = 0; i < 3; i++) {
+            const starIcon = document.createElement('i');
+            starIcon.className = `fa-solid fa-star candy-star`;
+            finalStarsContainer.appendChild(starIcon);
+
+            setTimeout(() => {
+                if (i < starsCount) starIcon.classList.add('animate-win');
+                else starIcon.classList.add('animate-lose');
+            }, 300 + (i * 400));
+        }
+
+        // === LISTA PAROLE FINALI ===
+        const wordsResultContainer = document.getElementById('final-words-list');
+        if (wordsResultContainer) {
+            wordsResultContainer.innerHTML = ''; // Svuotiamo eventuali duplicati
+
+            // Ordiniamo le parole dalla più lunga alla più corta
+            const sortedFinalWords = [...targetWords].sort((a, b) => b.length - a.length);
+
+            sortedFinalWords.forEach(word => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'final-word-item';
+
+                if (foundWords.includes(word)) {
+                    // Parola trovata: Spunta verde
+                    wordEl.innerHTML = `<span>${word}</span> <i class="fa-solid fa-check" style="color: #10b981;"></i>`;
+                    wordEl.classList.add('word-found');
+                } else {
+                    // Parola mancata: X rossa
+                    wordEl.innerHTML = `<span>${word}</span> <i class="fa-solid fa-xmark" style="color: #ef4444;"></i>`;
+                    wordEl.classList.add('word-missed');
+                }
+
+                wordsResultContainer.appendChild(wordEl);
+            });
+        }
+    }
     function buildWordSlots() {
         elements.wordsGrid.innerHTML = '';
         const sorted = [...targetWords].sort((a, b) => a.length - b.length || a.localeCompare(b));
