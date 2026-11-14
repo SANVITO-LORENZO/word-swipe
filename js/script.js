@@ -1,8 +1,41 @@
 /* ==========================================================================
-   WORD SWIPE — DAILY PUZZLE ENGINE
+   WORD SWIPE — DAILY PUZZLE ENGINE (WITH BUILT-IN FALLBACK DB)
    Author: Lorenzo Sanvito (https://github.com/SANVITO-LORENZO)
    Notice: Proprietary source code. Unauthorized reproduction is prohibited.
    ========================================================================== */
+
+const FALLBACK_PUZZLES = [
+    { id: 1001, letters: ["A", "M", "O", "R", "E"], words: ["AMORE", "MARE", "MORA", "MORE", "ORMA", "ORME", "RAME", "RAMO"], bonus: ["REMO", "ROMA", "AMO", "ORA"] },
+    { id: 1002, letters: ["P", "A", "R", "T", "E"], words: ["PARTE", "ARTE", "APRE", "PARE", "PERA", "RATE", "TARE", "TRE"], bonus: ["APE", "PER"] },
+    { id: 1003, letters: ["C", "A", "R", "T", "E"], words: ["CARTE", "CERTA", "CRETA", "ARTE", "CARE", "CERA", "CREA", "TACE"], bonus: ["RATE", "TARE", "TRE"] },
+    { id: 1004, letters: ["S", "A", "L", "T", "O"], words: ["SALTO", "STOLA", "ALTO", "LATO", "SOLA", "TOSA", "SALA"], bonus: ["SALO", "SOL"] },
+    { id: 1005, letters: ["F", "I", "O", "R", "E"], words: ["FIORE", "FIERO", "FERI", "EROI", "FORI", "IRE", "ORE"], bonus: ["REO", "REI"] },
+    { id: 1006, letters: ["P", "I", "A", "N", "O"], words: ["PIANO", "NOIA", "PAIO", "PANI", "PINO", "ANO", "API"], bonus: ["NOI", "POI"] },
+    { id: 1007, letters: ["C", "O", "R", "S", "A"], words: ["CORSA", "SACRO", "ARCO", "CARO", "CASO", "COSA", "ORSA", "ROSA"], bonus: ["CAOS", "RASO", "OCA", "ORA"] },
+    { id: 1008, letters: ["V", "E", "N", "T", "O"], words: ["VENTO", "NOTE", "NOVE", "VETO", "NEO", "OVE"], bonus: ["VOI"] },
+    { id: 1009, letters: ["S", "P", "E", "R", "A"], words: ["SPERA", "PRESA", "PERSA", "ASPRE", "APRE", "PARE", "PERA", "SERA"], bonus: ["PESA", "RESA", "APE", "PER"] },
+    { id: 1010, letters: ["C", "O", "N", "T", "A"], words: ["CONTA", "CANTO", "NATO", "NOTA", "TANA", "CON", "OCA"], bonus: ["ANO"] },
+    { id: 1011, letters: ["M", "O", "N", "T", "E"], words: ["MONTE", "MENTO", "MENO", "NOME", "NOTE", "NEO"], bonus: ["NON"] },
+    { id: 1012, letters: ["P", "O", "R", "T", "A"], words: ["PORTA", "PARTO", "PRATO", "APRO", "ARTO", "OPTA", "RAPO", "ORA"], bonus: ["ARO"] },
+    { id: 1013, letters: ["G", "R", "A", "N", "O"], words: ["GRANO", "RAGNO", "RANGO", "GARA", "ORNA", "RANA", "AGO", "ORA"], bonus: ["ANO", "ARA"] },
+    { id: 1014, letters: ["S", "C", "E", "N", "A"], words: ["SCENA", "NASCE", "CANE", "CASE", "CENA", "ESCA", "SANE", "ASCE"], bonus: ["SAN"] },
+    { id: 1015, letters: ["T", "R", "E", "N", "O"], words: ["TRENO", "ENTRO", "TERNO", "NERO", "NOTE", "OTRE", "ORE", "TRE"], bonus: ["NEO", "REO"] },
+    { id: 1016, letters: ["F", "E", "S", "T", "A"], words: ["FESTA", "FASE", "FATE", "SETA", "TESA", "EST", "STA"], bonus: ["FESA"] },
+    { id: 1017, letters: ["L", "E", "N", "T", "A"], words: ["LENTA", "ALTE", "ANTE", "LANE", "NATE", "TALE", "TANE", "TELA"], bonus: ["ALE"] },
+    { id: 1018, letters: ["M", "A", "D", "R", "E"], words: ["MADRE", "DAME", "DARE", "MARE", "RADE", "RAME", "REMA", "ERA"], bonus: ["DEA", "REA"] },
+    { id: 1019, letters: ["P", "A", "D", "R", "E"], words: ["PADRE", "PREDA", "APRE", "DARE", "PARE", "PERA", "RADE", "RAPE"], bonus: ["ARPE", "APE", "PER"] },
+    { id: 1020, letters: ["V", "I", "O", "L", "A"], words: ["VIOLA", "OLIVA", "OVALI", "VOLAI", "LAVI", "LAVO", "VOLA", "VOLI"], bonus: ["OLIA", "ALI", "VIA", "VOI"] },
+    { id: 1021, letters: ["C", "U", "O", "R", "E"], words: ["CUORE", "CERO", "CREO", "CURE", "CURO", "RECO", "ECO", "ORE"], bonus: ["REO"] },
+    { id: 1022, letters: ["P", "E", "R", "L", "A"], words: ["PERLA", "APRE", "ARPE", "PALE", "PARE", "PELA", "PERA", "RAPE"], bonus: ["APE", "PER"] },
+    { id: 1023, letters: ["B", "O", "R", "S", "A"], words: ["BORSA", "BARO", "BASO", "ORSA", "RASO", "ROSA", "BAR", "ORA"], bonus: ["ARO", "OSA"] },
+    { id: 1024, letters: ["C", "I", "E", "L", "O"], words: ["CIELO", "LICEO", "CELI", "CELO", "COLI", "ECO", "LEI"], bonus: ["OLI"] },
+    { id: 1025, letters: ["D", "O", "L", "C", "E"], words: ["DOLCE", "CELO", "CODE", "LEDO", "LODE", "ECO", "ODE"], bonus: ["DEL"] },
+    { id: 1026, letters: ["F", "R", "A", "S", "E"], words: ["FRASE", "SFERA", "FARE", "FASE", "RASE", "RESA", "SERA", "ERA"], bonus: ["FESA", "FRA"] },
+    { id: 1027, letters: ["M", "E", "T", "R", "O"], words: ["METRO", "MORTE", "TREMO", "MORE", "ORME", "OTRE", "REMO", "TRE"], bonus: ["ORE", "REO"] },
+    { id: 1028, letters: ["N", "O", "R", "M", "A"], words: ["NORMA", "ARMO", "MANO", "MORA", "ORMA", "ORNA", "RAMO", "ROMA"], bonus: ["AMO", "ANO", "ORA"] },
+    { id: 1029, letters: ["R", "I", "T", "M", "O"], words: ["RITMO", "MORTI", "MIRO", "MITO", "MORI", "ORTI", "RITO", "TIRO"], bonus: ["OTRI", "TORI", "MIO"] },
+    { id: 1030, letters: ["S", "C", "A", "L", "O"], words: ["SCALO", "LOSCA", "SOLCA", "CALO", "CASO", "COLA", "COSA", "SOLA"], bonus: ["CAOS", "SALO", "OCA"] }
+];
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -12,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('dragstart', (e) => e.preventDefault());
     document.addEventListener('keydown', (e) => {
-        const key = e.key.toLowerCase();
+        const key = (e.key || '').toLowerCase();
         if (
             e.key === 'F12' ||
             (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(key)) ||
@@ -30,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const MAX_HINTS = 3;
     const todayStr = new Date().toISOString().split('T')[0];
 
-    let puzzleDB = [];
+    let puzzleDB = [...FALLBACK_PUZZLES];
     let currentPuzzle = null;
     let levelLetters = [];
     let targetWords = [];
@@ -73,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         wordDisplay: document.getElementById('word-display'),
         toastPill: document.getElementById('toast-pill'),
         board: document.getElementById('board'),
-        boardArea: document.getElementById('board-area'),
+        boardArea: document.getElementById('board-area') || document.querySelector('.board-area'),
         btnShuffle: document.getElementById('btn-shuffle'),
         btnHint: document.getElementById('btn-hint'),
         hintCount: document.getElementById('hint-count'),
@@ -86,12 +119,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     /* ---------------------------------------------------------------------- */
-    /*  03. LEVEL LOADER & DAILY PERSISTENCE                                  */
+    /*  03. RESILIENT LEVEL LOADER (JSON + INSTANT FALLBACK)                  */
     /* ---------------------------------------------------------------------- */
     const setupPuzzleData = (puzzle) => {
         currentPuzzle = puzzle;
         levelLetters = [...puzzle.letters];
-        // Deduplicate and sanitize target words
         targetWords = [...new Set(puzzle.words.map((w) => w.trim().toUpperCase()))];
         bonusWordsPool = [...new Set((puzzle.bonus || []).map((w) => w.trim().toUpperCase()))];
 
@@ -102,54 +134,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             total
         ];
 
-        elements.levelIdDisplay.textContent = puzzle.id;
-        elements.startTotal.textContent = total;
-        elements.wordsTotalTxt.textContent = total;
+        if (elements.levelIdDisplay) elements.levelIdDisplay.textContent = puzzle.id;
+        if (elements.startTotal) elements.startTotal.textContent = total;
+        if (elements.wordsTotalTxt) elements.wordsTotalTxt.textContent = total;
     };
 
     try {
-        const response = await fetch('puzzles.json');
-        puzzleDB = await response.json();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const response = await fetch('puzzles.json?v=3', { signal: controller.signal });
+        clearTimeout(timeoutId);
 
-        const savedDate = localStorage.getItem('ws_date');
-        let savedPuzzleId = localStorage.getItem('ws_puzzle_id');
-        let savedStatus = localStorage.getItem('ws_status');
-
-        if (savedDate !== todayStr || !savedPuzzleId) {
-            const randomIndex = Math.floor(Math.random() * puzzleDB.length);
-            savedPuzzleId = puzzleDB[randomIndex].id;
-            savedStatus = 'ready';
-
-            localStorage.setItem('ws_date', todayStr);
-            localStorage.setItem('ws_puzzle_id', savedPuzzleId);
-            localStorage.setItem('ws_status', 'ready');
-            localStorage.removeItem('ws_found_words');
-            localStorage.removeItem('ws_bonus_count');
+        if (response.ok) {
+            const loaded = await response.json();
+            if (Array.isArray(loaded) && loaded.length > 0 && loaded[0].words) {
+                // Use external JSON only if it has clean levels (<= 10 target words)
+                const cleanLevels = loaded.filter((p) => Array.isArray(p.words) && p.words.length <= 10);
+                if (cleanLevels.length > 0) puzzleDB = cleanLevels;
+            }
         }
+    } catch (_) {
+        // Silently use FALLBACK_PUZZLES if fetch fails or times out
+    }
 
-        const todayPuzzle = puzzleDB.find((p) => p.id == savedPuzzleId) || puzzleDB[0];
-        setupPuzzleData(todayPuzzle);
+    const savedDate = localStorage.getItem('ws_date');
+    let savedPuzzleId = localStorage.getItem('ws_puzzle_id');
+    let savedStatus = localStorage.getItem('ws_status');
 
-        if (savedStatus === 'completed') {
-            const savedWords = JSON.parse(localStorage.getItem('ws_found_words') || '[]');
-            const savedStars = parseInt(localStorage.getItem('ws_stars') || '0', 10);
-            foundWords = savedWords;
-            screens.start.classList.remove('active');
-            showEndScreen(foundWords.length === targetWords.length, foundWords.length, savedStars);
-        } else {
-            elements.btnStart.textContent = 'Gioca Ora';
-            elements.btnStart.disabled = false;
-            elements.btnStart.addEventListener('click', () => startGame(false));
-        }
-    } catch (err) {
-        console.error('Failed to load puzzles.json:', err);
-        elements.btnStart.textContent = 'Errore DB';
+    if (savedDate !== todayStr || !savedPuzzleId) {
+        const randomIndex = Math.floor(Math.random() * puzzleDB.length);
+        savedPuzzleId = puzzleDB[randomIndex].id;
+        savedStatus = 'ready';
+
+        localStorage.setItem('ws_date', todayStr);
+        localStorage.setItem('ws_puzzle_id', savedPuzzleId);
+        localStorage.setItem('ws_status', 'ready');
+        localStorage.removeItem('ws_found_words');
+    }
+
+    const todayPuzzle = puzzleDB.find((p) => p.id == savedPuzzleId) || puzzleDB[0];
+    setupPuzzleData(todayPuzzle);
+
+    if (savedStatus === 'completed') {
+        const savedWords = JSON.parse(localStorage.getItem('ws_found_words') || '[]');
+        const savedStars = parseInt(localStorage.getItem('ws_stars') || '0', 10);
+        foundWords = savedWords;
+        screens.start.classList.remove('active');
+        showEndScreen(foundWords.length === targetWords.length, foundWords.length, savedStars);
+    } else {
+        elements.btnStart.textContent = 'Gioca Ora';
+        elements.btnStart.disabled = false;
+        elements.btnStart.addEventListener('click', () => startGame(false));
     }
 
     /* ---------------------------------------------------------------------- */
     /*  04. GAME LOOP & TIMER                                                 */
     /* ---------------------------------------------------------------------- */
     function showToast(msg, isBonus = false) {
+        if (!elements.toastPill) return;
         clearTimeout(toastTimeout);
         elements.toastPill.textContent = msg;
         elements.toastPill.className = `toast-pill show${isBonus ? ' bonus' : ''}`;
@@ -162,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
         elements.timerDisplay.textContent = `${m}:${s}`;
-        elements.timerBadge.classList.toggle('warning', timeLeft <= 15);
+        elements.timerBadge?.classList.toggle('warning', timeLeft <= 15);
     }
 
     function startGame(practice = false) {
@@ -174,10 +216,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         elements.wordsFoundTxt.textContent = '0';
         elements.progressBar.style.width = '0%';
-        elements.bonusCount.textContent = '0';
-        elements.hintCount.textContent = String(hintsLeft);
-        elements.btnHint.disabled = false;
-        elements.stars.forEach((s) => s.classList.remove('filled'));
+        if (elements.bonusCount) elements.bonusCount.textContent = '0';
+        if (elements.hintCount) elements.hintCount.textContent = String(hintsLeft);
+        if (elements.btnHint) elements.btnHint.disabled = false;
+        elements.stars.forEach((s) => s?.classList.remove('filled'));
         updateTimerUI();
 
         screens.start.classList.remove('active');
@@ -235,8 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Hint system: reveals a single unrevealed letter box
-    elements.btnHint.addEventListener('click', () => {
+    elements.btnHint?.addEventListener('click', () => {
         if (hintsLeft <= 0) return;
         const remainingWords = targetWords.filter((w) => !foundWords.includes(w));
         if (remainingWords.length === 0) return;
@@ -252,10 +293,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         randomBox.classList.add('hinted');
 
         hintsLeft--;
-        elements.hintCount.textContent = String(hintsLeft);
+        if (elements.hintCount) elements.hintCount.textContent = String(hintsLeft);
         if (hintsLeft <= 0) elements.btnHint.disabled = true;
 
-        // Auto-complete word if all letters in that slot were revealed via hints
         if (slot.querySelectorAll('.letter-box:not(.hinted)').length === 0) {
             registerFoundWord(targetWord);
         }
@@ -263,9 +303,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function showEndScreen(isWin, wordsCount, starsCount) {
         screens.end.classList.add('active');
-        elements.endLevelTag.textContent = isPracticeMode
-            ? `MODALITÀ EXTRA • #${currentPuzzle.id}`
-            : `SFIDA GIORNALIERA • #${currentPuzzle.id}`;
+        if (elements.endLevelTag) {
+            elements.endLevelTag.textContent = isPracticeMode
+                ? `MODALITÀ EXTRA • #${currentPuzzle.id}`
+                : `SFIDA GIORNALIERA • #${currentPuzzle.id}`;
+        }
 
         document.getElementById('end-title').textContent = isWin ? 'Livello Completato!' : 'Tempo Scaduto!';
         const bonusTxt = foundBonusWords.length > 0 ? ` (+${foundBonusWords.length} bonus)` : '';
@@ -286,22 +328,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const wordsResultContainer = document.getElementById('final-words-list');
-        wordsResultContainer.innerHTML = '';
-
-        const sortedFinalWords = [...targetWords].sort((a, b) => b.length - a.length);
-        sortedFinalWords.forEach((word) => {
-            const wordEl = document.createElement('div');
-            const isFound = foundWords.includes(word);
-            wordEl.className = `final-word-item ${isFound ? 'word-found' : 'word-missed'}`;
-            wordEl.innerHTML = isFound
-                ? `<span>${word}</span> <i class="fa-solid fa-check" style="color: #10b981;"></i>`
-                : `<span>${word}</span> <i class="fa-solid fa-xmark" style="color: #ef4444;"></i>`;
-            wordsResultContainer.appendChild(wordEl);
-        });
+        if (wordsResultContainer) {
+            wordsResultContainer.innerHTML = '';
+            const sortedFinalWords = [...targetWords].sort((a, b) => b.length - a.length);
+            sortedFinalWords.forEach((word) => {
+                const wordEl = document.createElement('div');
+                const isFound = foundWords.includes(word);
+                wordEl.className = `final-word-item ${isFound ? 'word-found' : 'word-missed'}`;
+                wordEl.innerHTML = isFound
+                    ? `<span>${word}</span> <i class="fa-solid fa-check" style="color: #10b981;"></i>`
+                    : `<span>${word}</span> <i class="fa-solid fa-xmark" style="color: #ef4444;"></i>`;
+                wordsResultContainer.appendChild(wordEl);
+            });
+        }
     }
 
-    // Play another random level in Practice Mode
-    elements.btnPlayRandom.addEventListener('click', () => {
+    elements.btnPlayRandom?.addEventListener('click', () => {
         if (!puzzleDB.length) return;
         const otherPuzzles = puzzleDB.filter((p) => p.id !== currentPuzzle?.id);
         const pool = otherPuzzles.length ? otherPuzzles : puzzleDB;
@@ -357,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    elements.btnShuffle.addEventListener('click', () => {
+    elements.btnShuffle?.addEventListener('click', () => {
         for (let i = levelLetters.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [levelLetters[i], levelLetters[j]] = [levelLetters[j], levelLetters[i]];
@@ -416,7 +458,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const dist = Math.hypot(clientX - centerX, clientY - centerY);
 
             if (dist <= rect.width * 0.48) {
-                // Backtrack: if user drags back to the second-to-last node, undo the last node
                 if (
                     selectedNodes.length >= 2 &&
                     selectedNodes[selectedNodes.length - 2] === node
@@ -442,11 +483,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    elements.boardArea.addEventListener('touchstart', (e) => {
+    elements.boardArea?.addEventListener('touchstart', (e) => {
         if (!e.target.closest('button')) e.preventDefault();
     }, { passive: false });
 
-    elements.boardArea.addEventListener('pointerdown', (e) => {
+    elements.boardArea?.addEventListener('pointerdown', (e) => {
         if (e.target.closest('button')) return;
         isDragging = true;
         pointerX = e.clientX;
@@ -454,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         checkIntersection(pointerX, pointerY);
     });
 
-    elements.boardArea.addEventListener('pointermove', (e) => {
+    elements.boardArea?.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         pointerX = e.clientX;
         pointerY = e.clientY;
@@ -468,37 +509,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         drawLines();
         validateWord();
         resetSelection();
-    });
-
-    // Desktop keyboard support for accessibility & speed
-    window.addEventListener('keydown', (e) => {
-        if (!screens.game.classList.contains('active')) return;
-        const key = e.key.toUpperCase();
-
-        if (e.key === 'Backspace') {
-            const popped = selectedNodes.pop();
-            if (popped) popped.classList.remove('selected');
-            currentWord = selectedNodes.map((n) => n.dataset.letter).join('');
-            elements.wordDisplay.textContent = currentWord;
-            drawLines();
-        } else if (e.key === 'Enter') {
-            validateWord();
-            resetSelection();
-        } else if (e.key === ' ') {
-            e.preventDefault();
-            elements.btnShuffle.click();
-        } else if (/^[A-Z]$/.test(key)) {
-            const availableNode = [...document.querySelectorAll('.letter-node')].find(
-                (n) => n.dataset.letter === key && !selectedNodes.includes(n)
-            );
-            if (availableNode) {
-                selectedNodes.push(availableNode);
-                availableNode.classList.add('selected');
-                currentWord += key;
-                elements.wordDisplay.textContent = currentWord;
-                drawLines();
-            }
-        }
     });
 
     /* ---------------------------------------------------------------------- */
@@ -523,7 +533,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         for (let i = 0; i < 3; i++) {
             if (foundWords.length >= starThresholds[i]) {
-                elements.stars[i].classList.add('filled');
+                elements.stars[i]?.classList.add('filled');
             }
         }
 
@@ -555,8 +565,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             foundBonusWords.push(currentWord);
             timeLeft += 5;
             updateTimerUI();
-            elements.bonusCount.textContent = String(foundBonusWords.length);
-            showToast(`✨ Parola Bonus! +5s`, true);
+            if (elements.bonusCount) elements.bonusCount.textContent = String(foundBonusWords.length);
+            showToast('✨ Parola Bonus! +5s', true);
             return;
         }
 
