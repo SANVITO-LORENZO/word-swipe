@@ -109,8 +109,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         boardArea: document.getElementById('board-area') || document.querySelector('.board-area'),
         btnShuffle: document.getElementById('btn-shuffle'),
         btnHint: document.getElementById('btn-hint'),
+        bonusBox: document.getElementById('bonus-box'),
         hintCount: document.getElementById('hint-count'),
         bonusCount: document.getElementById('bonus-count'),
+        scoreStarsVal: document.getElementById('score-stars-val'),
+        scoreWordsVal: document.getElementById('score-words-val'),
+        scoreBonusVal: document.getElementById('score-bonus-val'),
         stars: [
             document.getElementById('star-1'),
             document.getElementById('star-2'),
@@ -142,19 +146,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
-        const response = await fetch('puzzles.json?v=3', { signal: controller.signal });
+        const response = await fetch('puzzles.json?v=4', { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (response.ok) {
             const loaded = await response.json();
             if (Array.isArray(loaded) && loaded.length > 0 && loaded[0].words) {
-                // Use external JSON only if it has clean levels (<= 10 target words)
                 const cleanLevels = loaded.filter((p) => Array.isArray(p.words) && p.words.length <= 10);
                 if (cleanLevels.length > 0) puzzleDB = cleanLevels;
             }
         }
     } catch (_) {
-        // Silently use FALLBACK_PUZZLES if fetch fails or times out
+        // Fallback DB is used automatically
     }
 
     const savedDate = localStorage.getItem('ws_date');
@@ -170,6 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('ws_puzzle_id', savedPuzzleId);
         localStorage.setItem('ws_status', 'ready');
         localStorage.removeItem('ws_found_words');
+        localStorage.removeItem('ws_bonus_words');
     }
 
     const todayPuzzle = puzzleDB.find((p) => p.id == savedPuzzleId) || puzzleDB[0];
@@ -177,8 +181,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (savedStatus === 'completed') {
         const savedWords = JSON.parse(localStorage.getItem('ws_found_words') || '[]');
+        const savedBonus = JSON.parse(localStorage.getItem('ws_bonus_words') || '[]');
         const savedStars = parseInt(localStorage.getItem('ws_stars') || '0', 10);
         foundWords = savedWords;
+        foundBonusWords = savedBonus;
         screens.start.classList.remove('active');
         showEndScreen(foundWords.length === targetWords.length, foundWords.length, savedStars);
     } else {
@@ -197,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.toastPill.className = `toast-pill show${isBonus ? ' bonus' : ''}`;
         toastTimeout = setTimeout(() => {
             elements.toastPill.classList.remove('show');
-        }, 1600);
+        }, 2000);
     }
 
     function updateTimerUI() {
@@ -248,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!isPracticeMode) {
             localStorage.setItem('ws_status', 'completed');
             localStorage.setItem('ws_found_words', JSON.stringify(foundWords));
+            localStorage.setItem('ws_bonus_words', JSON.stringify(foundBonusWords));
             localStorage.setItem('ws_stars', String(starsWon));
         }
 
@@ -256,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /* ---------------------------------------------------------------------- */
-    /*  05. SLOTS, HINTS & END SCREEN                                         */
+    /*  05. SLOTS, BONUS INFO, HINTS & END SCREEN                             */
     /* ---------------------------------------------------------------------- */
     function buildWordSlots() {
         elements.wordsGrid.innerHTML = '';
@@ -277,8 +284,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Left Pill Click: Explain bonus words or list found ones
+    elements.bonusBox?.addEventListener('click', () => {
+        if (foundBonusWords.length === 0) {
+            showToast('✨ Trova parole extra valide per +5s sul timer!', true);
+        } else {
+            showToast(`✨ Bonus (+${foundBonusWords.length * 5}s): ${foundBonusWords.join(', ')}`, true);
+        }
+    });
+
+    // Right Pill Click: Reveal a random hidden letter in the grid
     elements.btnHint?.addEventListener('click', () => {
-        if (hintsLeft <= 0) return;
+        if (hintsLeft <= 0) {
+            showToast('Hai esaurito gli aiuti disponibili!');
+            return;
+        }
         const remainingWords = targetWords.filter((w) => !foundWords.includes(w));
         if (remainingWords.length === 0) return;
 
@@ -291,10 +311,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const randomBox = hiddenBoxes[Math.floor(Math.random() * hiddenBoxes.length)];
         randomBox.classList.add('hinted');
+        randomBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         hintsLeft--;
         if (elements.hintCount) elements.hintCount.textContent = String(hintsLeft);
         if (hintsLeft <= 0) elements.btnHint.disabled = true;
+
+        showToast(`💡 Lettera "${randomBox.textContent}" rivelata!`);
 
         if (slot.querySelectorAll('.letter-box:not(.hinted)').length === 0) {
             registerFoundWord(targetWord);
@@ -310,21 +333,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         document.getElementById('end-title').textContent = isWin ? 'Livello Completato!' : 'Tempo Scaduto!';
-        const bonusTxt = foundBonusWords.length > 0 ? ` (+${foundBonusWords.length} bonus)` : '';
-        document.getElementById('end-subtitle').textContent =
-            `Hai trovato ${wordsCount} parole su ${targetWords.length}${bonusTxt}.`;
 
+        // Populate Numeric Score Summary Bar
+        if (elements.scoreStarsVal) elements.scoreStarsVal.textContent = `${starsCount}/3`;
+        if (elements.scoreWordsVal) elements.scoreWordsVal.textContent = `${wordsCount}/${targetWords.length}`;
+        if (elements.scoreBonusVal) elements.scoreBonusVal.textContent = `+${foundBonusWords.length}`;
+
+        const bonusTxt = foundBonusWords.length > 0 ? ` e ${foundBonusWords.length} parole bonus` : '';
+        document.getElementById('end-subtitle').textContent =
+            `Hai scoperto ${wordsCount} parole principali su ${targetWords.length}${bonusTxt}.`;
+
+        // Render 3 visible stars with guaranteed fallback visibility
         const finalStarsContainer = document.getElementById('final-stars');
         finalStarsContainer.innerHTML = '';
 
         for (let i = 0; i < 3; i++) {
             const starIcon = document.createElement('i');
-            starIcon.className = 'fa-solid fa-star candy-star';
+            const earned = i < starsCount;
+            starIcon.className = `fa-solid fa-star candy-star ${earned ? 'animate-win' : 'animate-lose'}`;
             finalStarsContainer.appendChild(starIcon);
-
-            setTimeout(() => {
-                starIcon.classList.add(i < starsCount ? 'animate-win' : 'animate-lose');
-            }, 220 + i * 320);
         }
 
         const wordsResultContainer = document.getElementById('final-words-list');
@@ -566,7 +593,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             timeLeft += 5;
             updateTimerUI();
             if (elements.bonusCount) elements.bonusCount.textContent = String(foundBonusWords.length);
-            showToast('✨ Parola Bonus! +5s', true);
+            showToast(`✨ Parola Bonus "${currentWord}"! +5s`, true);
             return;
         }
 
